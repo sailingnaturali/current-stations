@@ -26,7 +26,7 @@ turns out **not** to be true, because chasing that wastes days too.
 ## Install
 
 ```bash
-npm install @sailingnaturali/current-constituents
+npm install @sailingnaturali/current-stations
 ```
 
 ## Use it as a CLI
@@ -55,7 +55,7 @@ npx current-stations check
 ## Use it as a library
 
 ```js
-import { extractBundle, fetchCurrentPredictions, fetchHarcon } from '@sailingnaturali/current-constituents';
+import { extractBundle, fetchCurrentPredictions, fetchHarcon } from '@sailingnaturali/current-stations';
 
 // A bundle you can ship and predict from offline.
 const { bundle, skipped } = await extractBundle({ stations: ['PUG1717'] });
