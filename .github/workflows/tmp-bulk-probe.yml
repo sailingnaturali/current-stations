@@ -1,0 +1,19 @@
+name: tmp-bulk-probe
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with: { node-version: 24 }
+      - name: full US extraction from a datacenter IP
+        run: |
+          START=$(date +%s)
+          node bin/current-stations.mjs extract /tmp/us.json --pace 300 2>&1 | tail -20
+          echo "elapsed: $(( $(date +%s) - START ))s"
+          node -e "
+          const b=require('/tmp/us.json');
+          const n=t=>b.stations.filter(s=>s.type===t).length;
+          console.log('RESULT harmonic',n('harmonic'),'subordinate',n('subordinate'));"
