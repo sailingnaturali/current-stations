@@ -15,4 +15,18 @@ jobs:
           node-version: 24
       - run: npm ci
       - run: npm test
-      - run: npm publish
+      # 0.1.0 was published by hand (a new package can't have a trusted publisher
+      # configured before it exists). Without this guard, cutting the v0.1.0 release
+      # to attach the bundle would fail on an already-published version.
+      - id: published
+        run: |
+          V=$(node -p "require('./package.json').version")
+          N=$(node -p "require('./package.json').name")
+          if npm view "$N@$V" version >/dev/null 2>&1; then
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            echo "$N@$V is already on npm — nothing to publish."
+          else
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+          fi
+      - if: steps.published.outputs.skip == 'false'
+        run: npm publish
