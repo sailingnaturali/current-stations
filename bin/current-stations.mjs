@@ -4,6 +4,7 @@ import { writeFileSync, readFileSync } from 'node:fs';
 import { extractBundle } from '../src/extract.js';
 import { captureGolden } from '../src/golden.js';
 import { checkDrift, buildLock } from '../src/drift.js';
+import { validateBundle } from '../src/validate.js';
 import { fetchStationList } from '../src/noaa.js';
 
 const USAGE = `current-stations — NOAA CO-OPS tidal-current station data
@@ -12,6 +13,7 @@ const USAGE = `current-stations — NOAA CO-OPS tidal-current station data
   current-stations golden  <out.json> --station ID --bin N --start ISO --end ISO
   current-stations check   [lock.json]   exit 1 if NOAA's list has drifted from the lock
   current-stations lock    <out.json>    re-pin the lock to NOAA's current list
+  current-stations validate <bundle.json> structural check on a bundle
 
 Examples:
   current-stations extract currents.json                       # all US stations
@@ -43,7 +45,9 @@ if (cmd === 'extract') {
     ...(paceMs !== undefined ? { paceMs } : {}),
     log,
   });
-  writeFileSync(out, JSON.stringify(bundle) + '\n');
+  // Pretty-printed on purpose: this file is committed and its diff is how a NOAA
+  // revision gets reviewed. Release artifacts are minified from it.
+  writeFileSync(out, JSON.stringify(bundle, null, 2) + '\n');
   log(`wrote ${out} — ${bundle.stations.length} stations`);
   if (skipped.failed.length) process.exitCode = 1;
 } else if (cmd === 'golden') {
@@ -74,6 +78,11 @@ if (cmd === 'extract') {
       + 'release — consumers are pinned to a bundle that no longer matches NOAA.');
     process.exitCode = 1;
   }
+} else if (cmd === 'validate') {
+  const v = validateBundle(JSON.parse(readFileSync(out, 'utf8')));
+  log(`${out}: ${v.counts.harmonic} harmonic, ${v.counts.subordinate} subordinate`);
+  for (const e of v.errors) log(`  ERROR: ${e}`);
+  if (!v.ok) process.exitCode = 1;
 } else if (cmd === 'lock') {
   const lock = buildLock(await fetchStationList({ paceMs: 0 }));
   writeFileSync(out, JSON.stringify(lock, null, 2) + '\n');

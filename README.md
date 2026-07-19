@@ -7,21 +7,8 @@ NOAA publishes harmonic constituents for **856 tidal-current stations** in US wa
 plus offset tables for **1,700-odd subordinate** stations. That is enough to predict slack
 water and max flood/ebb offline, anywhere in US waters, with no network at runtime.
 
-Almost nobody uses it, because the API has a handful of undocumented behaviours that
-make the data look like it doesn't exist. The worst one:
-
-```
-GET /stations/PUG1701/harcon.json?bin=0   → { "HarmonicConstituents": [] }
-GET /stations/PUG1701/harcon.json?bin=18  → 26 constituents
-```
-
-`bin=0` is the natural thing to try. The empty array reads as "NOAA doesn't publish
-current constituents." It does — at each station's `currbin`, and nowhere else. That one
-cost us a day and a wrong architecture decision (we nearly took a dependency on XTide).
-
-**[→ docs/noaa-api.md](docs/noaa-api.md) is the full write-up.** If you're fighting this
-API, start there — including the one widely-repeated claim (User-Agent blocking) that
-turns out **not** to be true, because chasing that wastes days too.
+This package extracts that data, ships it as a versioned bundle, and documents the
+schema — so you don't have to talk to the API at all.
 
 ## Install
 
@@ -109,6 +96,32 @@ Three details that are easy to get wrong and expensive to debug:
   (89 min vs 6.8 min at PUG1716). Rare — 1 of 1,706 — but you can't tell which without
   asking, and the ask is one request.
 
+## Maintenance
+
+`currents.json` is committed, pretty-printed, so a change in NOAA's data is reviewable
+as a diff. [`update-stations`](.github/workflows/update-stations.yml) keeps it current:
+
+| Cadence | What runs | Catches |
+|---|---|---|
+| Weekly | pre-flight — **one** request for the station list | stations added, removed, or reclassified |
+| Monthly | forced full extraction (~2,800 paced requests, ~25 min) | NOAA revising an existing station's constituents in place |
+
+The weekly pre-flight only escalates to a full extraction when something moved, so the
+common case costs a single request. Either way, a change opens a **pull request** with
+the validation summary — nothing updates silently.
+
+`stations.lock.json` pins the current list; `current-stations check` is the same
+pre-flight you can run yourself, and exits non-zero on drift.
+
+```bash
+npx current-stations check                    # has NOAA's list moved?
+npx current-stations validate currents.json   # structural check on a bundle
+```
+
+`validate` is what gates the automated PR: it fails on a subordinate whose reference
+went missing, duplicate ids, a harmonic station with no constituents, or a bundle that
+lost its Z₀ offsets — the shapes a truncated extraction takes.
+
 ## Don't trust it until you've diffed it
 
 Both halves of a validation come from NOAA, so the check is self-contained: predict from
@@ -131,6 +144,22 @@ tolerances, and the list of convention questions this method settled:
 US waters only — this is a NOAA client, and NOAA publishes US stations. Other national
 hydrographic offices publish current data under their own terms; that is out of scope
 here.
+
+## If you're calling the NOAA API yourself
+
+You probably don't need to — that's what the bundle is for. But if you are, the API has
+undocumented behaviours that make the data look like it doesn't exist. The worst one:
+
+```
+GET /stations/PUG1701/harcon.json?bin=0   → { "HarmonicConstituents": [] }
+GET /stations/PUG1701/harcon.json?bin=18  → 26 constituents
+```
+
+`bin=0` is the natural thing to try, and the empty array reads as "NOAA doesn't publish
+current constituents." It does — at each station's `currbin`, and nowhere else.
+
+**[→ docs/noaa-api.md](docs/noaa-api.md)** has the rest, including the widely-repeated
+User-Agent-blocking claim that turns out **not** to be true.
 
 ## Licence and disclaimer
 

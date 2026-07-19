@@ -1,7 +1,7 @@
 {
   "name": "@sailingnaturali/current-stations",
   "version": "0.1.0",
-  "description": "NOAA CO-OPS tidal-current station data: harmonic constituents, subordinate offsets, and the live predictions API — extractor, schema, and the API's undocumented gotchas",
+  "description": "NOAA CO-OPS tidal-current station data: harmonic constituents, subordinate offsets, and the live predictions API \u2014 extractor, schema, and the API's undocumented gotchas",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
@@ -19,7 +19,9 @@
   "scripts": {
     "test": "node --test",
     "extract:us": "node bin/current-stations.mjs extract currents.json",
-    "validate": "node --test"
+    "validate": "node --test",
+    "bundle:min": "node -e \"const f=require('fs');f.writeFileSync('currents.min.json',JSON.stringify(JSON.parse(f.readFileSync('currents.json','utf8'))))\"",
+    "validate:bundle": "node bin/current-stations.mjs validate currents.json"
   },
   "keywords": [
     "noaa",

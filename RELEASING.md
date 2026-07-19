@@ -1,11 +1,16 @@
 # Releasing
 
 Two artifacts ship per release: the **npm package** (code, schema, docs) and the
-**US station bundle** (`currents.json`, ~1.6 MB) attached to the GitHub release.
+**US station bundle** attached to the GitHub release.
+
+`currents.json` is committed **pretty-printed** (~2.9 MB) so a NOAA revision is
+reviewable as a diff — that is the whole point of the
+[update-stations](.github/workflows/update-stations.yml) workflow. The release asset is
+**minified** (~1.6 MB) from that same file, so consumers vendor the small one.
 
 The bundle is not in the npm tarball on purpose — most consumers want either a small
 regional subset they extract themselves, or the prebuilt bundle vendored once. Making
-every install carry 1.6 MB serves neither.
+every install carry it serves neither.
 
 ## Building the bundle
 
@@ -15,20 +20,21 @@ to a local run. The old "must be built on a residential connection" caveat was w
 
 ## Steps
 
+Normally you do NOT extract by hand — `update-stations` opens a PR when NOAA moves.
+Merge that first, then:
+
 ```bash
-# 1. takes several minutes, paced at 400 ms
-npx current-stations extract currents.json
+# 1. minify the committed bundle into the release asset
+npm run bundle:min          # currents.json -> currents.min.json
 
-# 2. sanity-check the counts before shipping
-node -e "const b=require('./currents.json');
-  const n=t=>b.stations.filter(s=>s.type===t).length;
-  console.log(n('harmonic'),'harmonic,',n('subordinate'),'subordinate')"
+# 2. structural check (also run in the update PR, but cheap to repeat)
+npm run validate:bundle
 
-# 3. tag and release — this triggers the npm publish workflow
-gh release create v0.1.0 --notes "..."
+# 3. tag and release — triggers the npm publish workflow
+gh release create v0.2.0 --notes "..."
 
-# 4. attach the bundle to the release
-gh release upload v0.1.0 currents.json
+# 4. attach the bundle, named currents.json so vendoring scripts don't change
+gh release upload v0.2.0 currents.min.json#currents.json
 ```
 
 Expect roughly 855 harmonic + 1,700 subordinate stations, and **0 unresolvable
