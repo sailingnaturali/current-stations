@@ -20,7 +20,7 @@ Examples:
   current-stations golden pug1741.json --station PUG1741 --bin 27 \\
     --start 2026-07-19 --end 2026-07-21
 
-Run extractions from a residential connection — NOAA 404s the mdapi from datacenter IPs.
+A full extraction is thousands of paced requests. NOAA throttles bulk callers.
 `;
 
 const [cmd, out, ...rest] = process.argv.slice(2);

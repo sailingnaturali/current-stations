@@ -160,10 +160,10 @@ rare-but-severe trap, not a widespread one.
 
 ---
 
-## Corrections to earlier findings
+## A correction
 
-Two claims circulated internally (and shaped a round of downstream bug reports) that
-**do not reproduce**. They are recorded here because acting on them costs real work.
+One widely-repeated claim that **does not reproduce**, recorded here because acting on
+it costs real work.
 
 ### "NOAA 404s the default fetch/curl User-Agent"
 
@@ -185,16 +185,14 @@ cause of a 404 you are debugging.** Look at your `bin` first.
 
 The supported way to identify yourself is the `application` parameter on `datagetter`.
 
-### "`interval` must be lowercase `max_slack`"
-
-**Not reproducible.** `MAX_SLACK` and `max_slack` return byte-identical responses. The
-documented spelling is lowercase and that is what this client sends, but uppercase is
-not a bug you need to chase.
-
 ### What *is* real about access
 
-- **Datacenter IPs get 404s from the mdapi.** This one reproduces. Run extractions from
-  a residential connection; CI runners will fail.
+- **Datacenter IPs are *not* blocked**, contrary to what we believed. A GitHub-hosted
+  runner fetched all four endpoint families — `stations.json` (3.75 MB), `harcon`,
+  `currentpredictionoffsets`, and `datagetter` — with 200s and byte counts identical to
+  a residential connection (2026-07-19). What is untested is *bulk* extraction from a
+  shared datacenter IP: a few requests is not thousands, and throttling is real (below).
+  Don't assume a full extraction will survive a CI runner until someone tries it.
 - **NOAA throttles bulk callers.** A full US extraction is thousands of requests. Pace
   them (this client defaults to 400 ms) or you will get intermittent failures that look
   like missing data.

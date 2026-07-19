@@ -20,8 +20,8 @@ current constituents." It does — at each station's `currbin`, and nowhere else
 cost us a day and a wrong architecture decision (we nearly took a dependency on XTide).
 
 **[→ docs/noaa-api.md](docs/noaa-api.md) is the full write-up.** If you're fighting this
-API, start there — including the two widely-repeated claims that turn out **not** to be
-true (User-Agent blocking and `interval` casing), because chasing those wastes days too.
+API, start there — including the one widely-repeated claim (User-Agent blocking) that
+turns out **not** to be true, because chasing that wastes days too.
 
 ## Install
 
@@ -49,8 +49,8 @@ npx current-stations golden pug1741.json --station PUG1741 --bin 27 \
 npx current-stations check
 ```
 
-> Run extractions from a residential connection — NOAA 404s the metadata API from
-> datacenter IPs, so this will not work on a CI runner.
+> A full US extraction is ~2,800 paced requests and takes several minutes. NOAA
+> throttles bulk callers — leave the pacing alone unless you have a reason.
 
 ## Use it as a library
 

@@ -6,7 +6,7 @@
 //     `currbin`. bin=0 looks like "NOAA has no current constituents". It does.
 //   - `units=english` yields knots; `units=metric` yields cm/s. We use english.
 //   - the station list repeats each station once per depth bin; de-dup keep-first.
-//   - mdapi 404s from datacenter IPs. Run extractions from a residential connection.
+//   - NOAA throttles bulk callers. An extraction is thousands of requests: pace them.
 
 const MDAPI = 'https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi';
 const DATAGETTER = 'https://api.tidesandcurrents.noaa.gov/api/prod/datagetter';
@@ -56,7 +56,7 @@ export async function fetchOffsets(stationId, currbin, opts = {}) {
 /**
  * NOAA's own published slack/max-flood/max-ebb predictions — the oracle every
  * prediction engine in this org is validated against, and a live data source in
- * its own right. `interval=max_slack` is documented lowercase; NOAA accepts either.
+ * its own right.
  */
 export async function fetchCurrentPredictions(stationId, bin, start, end, opts = {}) {
   const ymd = (d) => d.toISOString().slice(0, 10).replace(/-/g, '');

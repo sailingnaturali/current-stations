@@ -9,13 +9,17 @@ every install carry 1.6 MB serves neither.
 
 ## Why the bundle is built by hand
 
-**NOAA 404s the metadata API from datacenter IPs.** A GitHub Actions runner cannot
-extract it. The bundle has to be built on a residential connection and uploaded.
+Habit and caution rather than a hard block. Single requests from GitHub-hosted runners
+work fine (verified 2026-07-19, all four endpoint families) — but a full extraction is
+~2,800 requests, and how NOAA treats that volume from a *shared* datacenter IP is
+untested. Until someone tests it, build it somewhere you control and upload the result.
+
+Automating this in CI is a reasonable follow-up; it just needs one careful trial run.
 
 ## Steps
 
 ```bash
-# 1. from a residential connection — takes several minutes, paced at 400 ms
+# 1. takes several minutes, paced at 400 ms
 npx current-stations extract currents.json
 
 # 2. sanity-check the counts before shipping

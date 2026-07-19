@@ -14,6 +14,6 @@ jobs:
       - uses: actions/setup-node@v7
         with:
           node-version: ${{ matrix.node }}
-      # No dependencies to install, and NOAA 404s datacenter IPs — every test
-      # here runs against a fake NOAA, never the network.
+      # No dependencies to install, and every test here runs against a fake NOAA —
+      # never the network, so this stays fast and can't fail on someone else's outage.
       - run: npm test
