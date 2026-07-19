@@ -1,0 +1,57 @@
+name: station-drift
+# NOAA revises its current-station list. When it does, the released bundle is stale and
+# every consumer is pinned to data that no longer matches NOAA — so find out on a
+# schedule rather than by diffing bundles months later.
+#
+# One request (the station list), no per-station fetches.
+on:
+  schedule:
+    - cron: '17 13 * * 1' # Mondays
+  workflow_dispatch:
+permissions:
+  contents: read
+  issues: write
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+      - id: drift
+        run: |
+          set +e
+          node bin/current-stations.mjs check 2> drift.txt
+          echo "status=$?" >> "$GITHUB_OUTPUT"
+          cat drift.txt
+        # NOAA has been reported to 404 datacenter IPs. If that is what happens here,
+        # this job cannot do its work from Actions and the check moves to a scheduled
+        # run on a residential host — the report below says which it was.
+      - if: steps.drift.outputs.status != '0'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const body = fs.readFileSync('drift.txt', 'utf8');
+            const title = 'NOAA station list has drifted';
+            const open = await github.rest.issues.listForRepo({
+              owner: context.repo.owner, repo: context.repo.repo,
+              state: 'open', labels: 'station-drift',
+            });
+            const text = ['```', body.trim(), '```',
+              '', `Detected by [station-drift](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}).`,
+              'Re-extract the bundle from a residential connection, re-run `current-stations lock`, and cut a release.'].join('\n');
+            if (open.data.length) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner, repo: context.repo.repo,
+                issue_number: open.data[0].number, body: text,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner, repo: context.repo.repo,
+                title, body: text, labels: ['station-drift'],
+              });
+            }
+      - if: steps.drift.outputs.status != '0'
+        run: exit 1

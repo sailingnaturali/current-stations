@@ -44,6 +44,9 @@ npx current-stations extract mine.json --stations PUG1717,PUG1701
 # capture a validation fixture: constituents + NOAA's own predictions, one file
 npx current-stations golden pug1741.json --station PUG1741 --bin 27 \
   --start 2026-07-19 --end 2026-07-21
+
+# has NOAA's station list changed since the bundle was built? (one request; exit 1 if so)
+npx current-stations check
 ```
 
 > Run extractions from a residential connection — NOAA 404s the metadata API from
@@ -101,9 +104,10 @@ Three details that are easy to get wrong and expensive to debug:
 - **A reference is `(station, bin)`**, hence `SFB1201@10`. Constituents vary by depth
   bin and a station may publish several; keying by station id alone silently predicts
   from the wrong depth.
-- **A `type: S` station is not necessarily subordinate.** Many carry their own harcon
+- **A `type: S` station is not necessarily subordinate.** A few carry their own harcon
   and NOAA predicts them harmonically; the offset reduction overshoots them badly
-  (89 min vs 6.8 min at PUG1716).
+  (89 min vs 6.8 min at PUG1716). Rare — 1 of 1,706 — but you can't tell which without
+  asking, and the ask is one request.
 
 ## Don't trust it until you've diffed it
 

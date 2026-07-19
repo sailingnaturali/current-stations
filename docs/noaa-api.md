@@ -138,9 +138,8 @@ diverse batch: mixed regions, positive and negative offsets, ratios from 0.2 to 
 
 ### `type: S` does not mean "use the offset reduction"
 
-Many type-S stations — survey-derived ones especially — carry their **own** harmonic
-constituents, and NOAA predicts those **harmonically**. Applying the offset reduction to
-them overshoots badly:
+Some type-S stations carry their **own** harmonic constituents, and NOAA predicts those
+**harmonically**. Applying the offset reduction to them overshoots badly:
 
 | PUG1716 predicted as | error vs NOAA |
 |---|---|
@@ -151,6 +150,13 @@ them overshoots badly:
 it comes back non-empty, treat it as harmonic. Only fall back to
 `currentpredictionoffsets.json` for stations whose harcon is genuinely empty — the true
 table-subordinates.
+
+**How often does this bite?** Measured across the full US set (2026-07): **1 of 1,706**
+type-S stations — `PUG1716`, Waldron Island. Earlier notes of ours said "many"; that was
+generalizing from the single case we happened to hit. The rule still stands, because the
+check is one request you are already making and the cost of skipping it is an 89-minute
+error at whichever station it turns out to be. But calibrate your expectations: this is a
+rare-but-severe trap, not a widespread one.
 
 ---
 
