@@ -1,0 +1,47 @@
+{
+  "name": "@sailingnaturali/current-constituents",
+  "version": "0.1.0",
+  "description": "NOAA CO-OPS tidal-current station data: harmonic constituents, subordinate offsets, and the live predictions API — extractor, schema, and the API's undocumented gotchas",
+  "type": "module",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "bin": {
+    "current-stations": "bin/current-stations.mjs"
+  },
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "src/",
+    "bin/",
+    "schema/",
+    "docs/"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "extract:us": "node bin/current-stations.mjs extract currents.json",
+    "validate": "node --test"
+  },
+  "keywords": [
+    "noaa",
+    "co-ops",
+    "tidal-currents",
+    "currents",
+    "harmonic-constituents",
+    "tides",
+    "marine",
+    "navigation"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/sailingnaturali/current-stations.git"
+  },
+  "homepage": "https://github.com/sailingnaturali/current-stations#readme",
+  "bugs": "https://github.com/sailingnaturali/current-stations/issues",
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
