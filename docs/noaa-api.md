@@ -25,8 +25,8 @@ GET /mdapi/prod/webapi/stations/PUG1701/harcon.json?units=english&bin=18
 
 There is no error, no hint, and `bin=0` is the natural thing to try. The empty array
 reads as "NOAA doesn't publish harmonic constituents for currents" — which is what we
-concluded, and it is wrong. NOAA publishes constituents for **855 current stations** in
-US waters.
+concluded, and it is wrong. NOAA publishes constituents for **856 current stations** in
+US waters (2026-07; the count drifts as NOAA revises its list).
 
 `currbin` comes from the station list. It is per-station and unguessable.
 

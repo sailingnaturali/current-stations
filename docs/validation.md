@@ -77,13 +77,25 @@ of a fast narrows on them alone.
 
 ## Extractor fidelity
 
-`extract` is diffed against a known-good bundle whenever it changes. Most recent run —
-Salish Sea box (47,-125 → 49.2,-122), 183 stations selected, 135 harmonic + 30
-subordinate + 20 type-W skipped, 0 unresolvable references:
+`extract` is diffed against a known-good bundle whenever it changes. Full US run,
+2026-07-19 — 2,785 stations selected, **856 harmonic + 1,705 subordinate**, 238 type-W
+skipped, **0 unresolvable references**:
 
-**164 of 164 overlapping stations byte-identical** to the reference bundle, plus
-`PUG1519` (Point Richmond, Colvos Passage) which NOAA has added since. Station-count
-drift like that is expected — NOAA's list grows.
+| | |
+|---|---|
+| Overlapping stations byte-identical | **2,558 of 2,558** |
+| Stations NOAA added since the reference bundle | 3 (`PUG1519`, `PCT5721`, `PCT5726`) |
+| Stations disappeared | 0 |
+| Subordinate references unresolved | 0 |
+| Reference entries at a **non-primary** bin (`id@bin`) | **14** |
+
+That last row is the per-bin trap in live data: 14 subordinates in US waters reduce
+against a reference bin that is *not* that station's primary bin. Key by station id
+alone and those 14 silently predict from the wrong depth — while every other station
+keeps passing.
+
+Station counts drift as NOAA revises its list; treat the totals as approximate and the
+**0 unresolvable references** as the invariant worth gating on.
 
 Unit tests (`npm test`) cover the traps with a fake NOAA: per-bin reference keying,
 type-S own-harcon precedence, two-slack offsets, ratio handling, list de-duplication,

@@ -3,8 +3,8 @@
 **NOAA CO-OPS tidal-current station data — the extractor, the schema, and the API's
 undocumented behaviour, in one place.**
 
-NOAA publishes harmonic constituents for **855 tidal-current stations** in US waters,
-plus offset tables for **1,700+ subordinate** stations. That is enough to predict slack
+NOAA publishes harmonic constituents for **856 tidal-current stations** in US waters,
+plus offset tables for **1,700-odd subordinate** stations. That is enough to predict slack
 water and max flood/ebb offline, anywhere in US waters, with no network at runtime.
 
 Almost nobody uses it, because the API has a handful of undocumented behaviours that
