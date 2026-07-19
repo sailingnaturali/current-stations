@@ -7,14 +7,11 @@ The bundle is not in the npm tarball on purpose — most consumers want either a
 regional subset they extract themselves, or the prebuilt bundle vendored once. Making
 every install carry 1.6 MB serves neither.
 
-## Why the bundle is built by hand
+## Building the bundle
 
-Habit and caution rather than a hard block. Single requests from GitHub-hosted runners
-work fine (verified 2026-07-19, all four endpoint families) — but a full extraction is
-~2,800 requests, and how NOAA treats that volume from a *shared* datacenter IP is
-untested. Until someone tests it, build it somewhere you control and upload the result.
-
-Automating this in CI is a reasonable follow-up; it just needs one careful trial run.
+Either locally or in CI — a full US extraction completes from a GitHub-hosted runner in
+~25 minutes with no throttling failures (verified 2026-07-19), producing counts identical
+to a local run. The old "must be built on a residential connection" caveat was wrong.
 
 ## Steps
 
