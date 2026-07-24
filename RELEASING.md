@@ -60,3 +60,6 @@ successful publish — that's propagation, not failure.
   (`tools/vendor-currents.sh`). Re-run its currents tests after.
 - `signalk-currents` — depends on the npm package; runs `extract --stations …` for its
   own subset.
+- `slackwater-web` — vendors a Salish Sea extract (`data/noaa-currents.json`,
+  `npx current-stations extract … --box 47,-125.5,50.5,-122`). Re-run its
+  `npm test` after re-vendoring.

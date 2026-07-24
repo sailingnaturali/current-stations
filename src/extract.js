@@ -52,7 +52,7 @@ export async function extractBundle(opts = {}) {
   const skipped = { typeW: 0, emptyHarcon: [], noReference: [], failed: [] };
 
   // Store (id, bin) if it has a non-empty harcon. Returns whether it did.
-  async function ensureHarmonic(key, id, bin, name) {
+  async function ensureHarmonic(key, id, bin, name, lat, lng) {
     if (harmonic.has(key)) return true;
     let cons;
     try {
@@ -68,6 +68,7 @@ export async function extractBundle(opts = {}) {
     const azi = cons[0].azi ?? 0;
     harmonic.set(key, {
       id: key, name, type: 'harmonic',
+      latitude: lat, longitude: lng,
       floodDirection: azi,
       ebbDirection: (azi + 180) % 360,
       offset: cons[0].majorMeanSpeed ?? 0,
@@ -82,7 +83,7 @@ export async function extractBundle(opts = {}) {
 
   for (const s of selected) {
     if (s.type === 'W') { skipped.typeW++; continue; }  // weak/rotary — not modeled
-    if (await ensureHarmonic(s.id, s.id, s.currbin, s.name)) continue;
+    if (await ensureHarmonic(s.id, s.id, s.currbin, s.name, s.lat, s.lng)) continue;
     if (s.type === 'H') { skipped.emptyHarcon.push(s.id); continue; }
 
     let o;
@@ -95,6 +96,7 @@ export async function extractBundle(opts = {}) {
     if (!o.refStationId) { skipped.noReference.push(s.id); continue; }
     subs.push({
       id: s.id, name: s.name, type: 'subordinate',
+      latitude: s.lat, longitude: s.lng,
       reference: harmonicKey(o.refStationId, o.refStationBin, primaryBin.get(o.refStationId)),
       _refId: o.refStationId, _refBin: o.refStationBin,
       floodDirection: o.meanFloodDir, ebbDirection: o.meanEbbDir,
@@ -112,7 +114,7 @@ export async function extractBundle(opts = {}) {
   for (const sub of subs) {
     if (harmonic.has(sub.reference)) continue;
     const ref = all.find((s) => s.id === sub._refId);
-    await ensureHarmonic(sub.reference, sub._refId, sub._refBin, ref?.name ?? sub._refId);
+    await ensureHarmonic(sub.reference, sub._refId, sub._refBin, ref?.name ?? sub._refId, ref?.lat, ref?.lng);
   }
 
   const resolved = subs.filter((x) => harmonic.has(x.reference));

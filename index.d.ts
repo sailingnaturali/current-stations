@@ -46,6 +46,8 @@ export interface HarmonicStation {
   /** `id` at the primary bin, `id@bin` for a reference at another bin. */
   id: string;
   name: string;
+  latitude: number;
+  longitude: number;
   type: 'harmonic';
   floodDirection: number;
   ebbDirection: number;
@@ -57,6 +59,8 @@ export interface HarmonicStation {
 export interface SubordinateStation {
   id: string;
   name: string;
+  latitude: number;
+  longitude: number;
   type: 'subordinate';
   /** Bundle key of the harmonic station this reduces against. */
   reference: string;

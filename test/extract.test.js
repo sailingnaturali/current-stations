@@ -134,6 +134,25 @@ test('drops subordinates whose reference never resolves, and reports it', async 
   assert.equal(skipped.unresolvable, 1);
 });
 
+test('bundle entries carry the station position', async () => {
+  const fake = fakeNoaa({
+    stations: [
+      { id: 'REF', name: 'Ref', lat: 41, lng: -71, type: 'H', currbin: 5 },
+      { id: 'ACT1234', name: 'Sub', lat: 42, lng: -72, type: 'S', currbin: 2 },
+    ],
+    harcon: { 'REF@5': [con('M2', 1.8, 322)] },
+    offsets: { ACT1234: { refStationId: 'REF', refStationBin: 5, mfcAmpAdj: 0.9, mecAmpAdj: 1.1 } },
+  });
+  const { bundle } = await run(fake);
+  for (const s of bundle.stations) {
+    assert.equal(typeof s.latitude, 'number');
+    assert.equal(typeof s.longitude, 'number');
+  }
+  const sub = bundle.stations.find((s) => s.id === 'ACT1234');
+  assert.equal(sub.latitude, 42);
+  assert.equal(sub.longitude, -72);
+});
+
 test('box and stations filters select without extra fetches', async () => {
   const stations = [
     { id: 'IN', name: 'In', lat: 48, lng: -123, type: 'H', currbin: 1 },

@@ -16,13 +16,15 @@
   "$defs": {
     "harmonic": {
       "type": "object",
-      "required": ["id", "name", "type", "floodDirection", "ebbDirection", "offset", "constituents"],
+      "required": ["id", "name", "latitude", "longitude", "type", "floodDirection", "ebbDirection", "offset", "constituents"],
       "properties": {
         "id": {
           "type": "string",
           "description": "NOAA station id at its primary bin, or `id@bin` for a reference at a non-primary bin. Constituents vary by depth bin, so identity is (station, bin)."
         },
         "name": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
         "type": { "const": "harmonic" },
         "floodDirection": { "type": "number", "description": "Major-axis azimuth (NOAA `azi`), degrees true." },
         "ebbDirection": { "type": "number", "description": "floodDirection + 180." },
@@ -47,10 +49,12 @@
     },
     "subordinate": {
       "type": "object",
-      "required": ["id", "name", "type", "reference"],
+      "required": ["id", "name", "latitude", "longitude", "type", "reference"],
       "properties": {
         "id": { "type": "string" },
         "name": { "type": "string" },
+        "latitude": { "type": "number" },
+        "longitude": { "type": "number" },
         "type": { "const": "subordinate" },
         "reference": {
           "type": "string",
