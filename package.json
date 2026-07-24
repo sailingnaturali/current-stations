@@ -1,7 +1,7 @@
 {
   "name": "@sailingnaturali/current-stations",
-  "version": "0.1.0",
-  "description": "NOAA CO-OPS tidal-current station data: harmonic constituents, subordinate offsets, and the live predictions API \u2014 extractor, schema, and the API's undocumented gotchas",
+  "version": "0.2.0",
+  "description": "NOAA CO-OPS tidal-current station data: harmonic constituents, subordinate offsets, and the live predictions API — extractor, schema, and the API's undocumented gotchas",
   "type": "module",
   "main": "index.js",
   "types": "index.d.ts",
