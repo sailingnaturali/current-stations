@@ -114,7 +114,13 @@ export async function extractBundle(opts = {}) {
   for (const sub of subs) {
     if (harmonic.has(sub.reference)) continue;
     const ref = all.find((s) => s.id === sub._refId);
-    await ensureHarmonic(sub.reference, sub._refId, sub._refBin, ref?.name ?? sub._refId, ref?.lat, ref?.lng);
+    if (!ref) {
+      // No station-list record means no lat/lng — building the harmonic entry anyway
+      // would silently violate the schema's required position fields.
+      skipped.failed.push(`${sub.id}: reference station ${sub._refId} not in NOAA's station list`);
+      continue;
+    }
+    await ensureHarmonic(sub.reference, sub._refId, sub._refBin, ref.name, ref.lat, ref.lng);
   }
 
   const resolved = subs.filter((x) => harmonic.has(x.reference));

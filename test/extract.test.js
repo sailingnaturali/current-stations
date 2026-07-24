@@ -153,6 +153,28 @@ test('bundle entries carry the station position', async () => {
   assert.equal(sub.longitude, -72);
 });
 
+test('a subordinate whose reference is absent from the station list is skipped, not silently unpositioned', async () => {
+  // SFB1201 has harcon at bin 10 but is NOT in the stations list (a NOAA metadata gap).
+  // Without a station-list record there is no lat/lng for it — building the harmonic
+  // entry anyway would silently violate the schema's required latitude/longitude.
+  const fake = fakeNoaa({
+    stations: [
+      { id: 'PCT0236', name: 'Sub', lat: 37, lng: -122, type: 'S', currbin: 1 },
+    ],
+    harcon: { 'SFB1201@10': [con('M2', 1.935, 161.7)] },
+    offsets: {
+      PCT0236: { refStationId: 'SFB1201', refStationBin: 10, mfcAmpAdj: 0.7, mecAmpAdj: 1.2 },
+    },
+  });
+  const { bundle, skipped } = await run(fake);
+  assert.equal(bundle.stations.length, 0, 'neither the sub nor an unpositioned reference enters the bundle');
+  assert.equal(skipped.unresolvable, 1);
+  assert.ok(
+    skipped.failed.some((m) => m.includes('PCT0236') && m.includes('SFB1201')),
+    'must log why, loudly',
+  );
+});
+
 test('box and stations filters select without extra fetches', async () => {
   const stations = [
     { id: 'IN', name: 'In', lat: 48, lng: -123, type: 'H', currbin: 1 },

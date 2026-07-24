@@ -32,6 +32,12 @@ export function validateBundle(bundle) {
   const unknownType = stations.filter((s) => s.type !== 'harmonic' && s.type !== 'subordinate');
   if (unknownType.length) errors.push(`${unknownType.length} station(s) of unknown type`);
 
+  const badPosition = stations.filter((s) => !Number.isFinite(s.latitude) || !Number.isFinite(s.longitude));
+  if (badPosition.length) {
+    errors.push(`${badPosition.length} station(s) missing a finite latitude/longitude: `
+      + badPosition.slice(0, 5).map((s) => s.id).join(', '));
+  }
+
   return {
     ok: errors.length === 0,
     counts: { harmonic: harmonic.length, subordinate: subordinate.length, total: stations.length },
