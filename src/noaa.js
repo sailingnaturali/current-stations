@@ -22,12 +22,29 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 /**
  * Paced JSON GET. NOAA throttles bulk callers, and an extraction is thousands of
  * requests — `paceMs` is the knob that keeps a full run from getting rate-limited.
+ *
+ * Retries 5xx/429 and network errors with exponential backoff. A full extraction is
+ * ~2,800 requests over ~25 minutes; without this a single transient 504 fails the run
+ * (2026-08-01: HUR0615 504'd once, discarding the whole monthly refresh). A 4xx is a
+ * real answer about the station — retrying it just wastes the pacing budget.
  */
-export async function getJson(url, { paceMs = 400, fetchFn = fetch } = {}) {
-  if (paceMs) await sleep(paceMs);
-  const resp = await fetchFn(url, { headers: { 'User-Agent': UA } });
-  if (!resp.ok) throw new Error(`NOAA ${resp.status} ${url}`);
-  return resp.json();
+export async function getJson(url, { paceMs = 400, fetchFn = fetch, retries = 3, retryMs = 1000 } = {}) {
+  for (let attempt = 0; ; attempt++) {
+    if (paceMs) await sleep(paceMs);
+    let resp;
+    try {
+      resp = await fetchFn(url, { headers: { 'User-Agent': UA } });
+    } catch (e) {
+      if (attempt >= retries) throw e;
+      await sleep(retryMs * 2 ** attempt);
+      continue;
+    }
+    if (resp.ok) return resp.json();
+    if (attempt >= retries || (resp.status < 500 && resp.status !== 429)) {
+      throw new Error(`NOAA ${resp.status} ${url}`);
+    }
+    await sleep(retryMs * 2 ** attempt);
+  }
 }
 
 /** Every current-prediction station NOAA publishes, de-duped to its primary bin. */
