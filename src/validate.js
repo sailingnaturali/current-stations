@@ -2,7 +2,9 @@
 // happen: a truncated/partial extraction, or a subordinate pointing at a reference
 // that isn't there (which silently yields no prediction at that station).
 
-/** @returns {{ok: boolean, counts: object, errors: string[]}} */
+import { CROSS_FLOW_RATIO_MAX } from './cross-flow.js';
+
+/** @returns {{ok: boolean, counts: object, crossFlow: object|null, errors: string[]}} */
 export function validateBundle(bundle) {
   const errors = [];
   const stations = bundle?.stations;
@@ -38,9 +40,22 @@ export function validateBundle(bundle) {
       + badPosition.slice(0, 5).map((s) => s.id).join(', '));
   }
 
+  // The bundle's whole model is one signed speed along a fixed flood axis. When
+  // cross-axis flow gets large next to the along-axis flow, that axis has stopped
+  // describing the station and the model there is suspect. A bundle predating this
+  // census carries no block — absent is "not measured", not "failed".
+  const cf = bundle.crossFlow ?? null;
+  if (cf?.worstRatio && cf.worstRatio.ratio > CROSS_FLOW_RATIO_MAX) {
+    errors.push(
+      `cross-flow ratio ${cf.worstRatio.ratio} at ${cf.worstRatio.id} exceeds ${CROSS_FLOW_RATIO_MAX} `
+      + '— the flood axis no longer describes that station, so its major-axis model is suspect',
+    );
+  }
+
   return {
     ok: errors.length === 0,
     counts: { harmonic: harmonic.length, subordinate: subordinate.length, total: stations.length },
+    crossFlow: cf,
     errors,
   };
 }

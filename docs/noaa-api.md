@@ -77,7 +77,8 @@ Mapping that produces predictions matching NOAA's own:
 | phase | `majorPhaseGMT` | Greenwich phase. Pairs with a Greenwich V₀ — confirmed empirically, see below |
 | flood direction | `azi` | ebb is `azi + 180` |
 | **Z₀ / mean flow** | `majorMeanSpeed` | signed, knots. **Do not drop this** — see below |
-| minor axis | `minorAmplitude`/`minorPhaseGMT` | for a 2D/rotary model; unused by a major-axis model |
+| minor axis | `minorAmplitude`/`minorPhaseGMT` | for a 2D/rotary model; unused by a major-axis model — but see `minorMeanSpeed` below |
+| cross-flow | `minorMeanSpeed` | DC flow perpendicular to the axis, running at ALL times including slack. Not carried per station; summarised in the bundle's `crossFlow` census |
 
 ### Z₀ is not optional
 

@@ -62,3 +62,38 @@ test('rejects a malformed bundle rather than throwing', () => {
   assert.equal(validateBundle({}).ok, false);
   assert.equal(validateBundle(null).ok, false);
 });
+
+const census = (extra = {}) => ({
+  measured: 'NOAA minorMeanSpeed …', records: 2, gte0_25kn: 1, gte0_50kn: 0,
+  worstRatio: { id: 'A', crossFlow: 0.1, alongAxisPeak: 1.0, ratio: 0.1 },
+  worstAbsolute: { id: 'A', crossFlow: 0.1 }, ...extra,
+});
+
+test('accepts a bundle whose cross-flow ratio is within the bound', () => {
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: census() });
+  assert.equal(v.ok, true);
+  assert.equal(v.crossFlow.worstRatio.ratio, 0.1);
+});
+
+test('rejects a bundle where the flood axis stops describing a station', () => {
+  const v = validateBundle({
+    stations: [harmonic('A')],
+    crossFlow: census({ worstRatio: { id: 'BAD', crossFlow: 0.9, alongAxisPeak: 1.0, ratio: 0.9 } }),
+  });
+  assert.equal(v.ok, false);
+  assert.match(v.errors.join(), /BAD/);
+  assert.match(v.errors.join(), /cross-flow/i);
+});
+
+test('a bundle predating the census is valid, not broken', () => {
+  // The vendored extract in slackwater-ios has no crossFlow block. A check that
+  // postdates a bundle must not turn that bundle red.
+  const v = validateBundle({ stations: [harmonic('A')] });
+  assert.equal(v.ok, true);
+  assert.equal(v.crossFlow, null);
+});
+
+test('a null census (no harmonic stations) is valid', () => {
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: null });
+  assert.equal(v.ok, true);
+});
