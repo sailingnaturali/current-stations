@@ -22,7 +22,10 @@
           "properties": {
             "id": { "type": "string" },
             "crossFlow": { "type": "number" },
-            "alongAxisPeak": { "type": "number" },
+            "alongAxisPeak": {
+              "type": "number",
+              "description": "Σ|majorAmplitude| + |Z0| — a theoretical maximum reached only if every constituent aligned in phase, not a realized peak speed. The denominator `ratio` and the 0.5 bound are only meaningful given this definition."
+            },
             "ratio": { "type": "number" }
           }
         },

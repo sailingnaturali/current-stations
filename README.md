@@ -62,7 +62,7 @@ Ships TypeScript types. No dependencies.
 {
   "note": "Generated from NOAA CO-OPS mdapi …",
   "crossFlow": {
-    "records": 856, "gte0_25kn": 61, "gte0_50kn": 12,
+    "measured": "…", "records": 856, "gte0_25kn": 61, "gte0_50kn": 12,
     "worstRatio": { "id": "BOS1130", "crossFlow": 0.178, "alongAxisPeak": 0.74, "ratio": 0.241 },
     "worstAbsolute": { "id": "PUG1619", "crossFlow": 0.8 }
   },

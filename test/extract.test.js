@@ -46,6 +46,8 @@ test('de-dupes the station list to the primary (first) bin', async () => {
   assert.equal(bundle.stations.length, 1);
   // The primary bin's constituents, not the second listing's.
   assert.equal(bundle.stations[0].constituents[0].amplitude, 2.359);
+  // The double-count guard is also the reason census records == harmonic station count.
+  assert.equal(bundle.crossFlow.records, 1);
 });
 
 test('trap 1: a subordinate referencing a NON-primary bin gets that exact bin', async () => {

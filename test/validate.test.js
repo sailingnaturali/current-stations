@@ -64,6 +64,22 @@ test('rejects a malformed bundle rather than throwing', () => {
   assert.equal(validateBundle({}).crossFlow, null);
 });
 
+test('a partial census (no worstRatio yet) returns cleanly rather than throwing', () => {
+  // Regression for a real crash: bin/current-stations.mjs's logCrossFlow guarded
+  // `!cf` but then dereferenced `cf.worstRatio.ratio` and `cf.worstAbsolute.crossFlow`
+  // unconditionally — a bundle whose census is present but partial (e.g. mid-refactor,
+  // or a future producer that hasn't filled it in) threw TypeError instead of
+  // reporting. That crash is in the CLI formatter, not here — validateBundle itself
+  // never dereferenced into crossFlow beyond an optional-chained `cf?.worstRatio`, so
+  // the coverage this test can honestly add is that a partial census doesn't upset
+  // validateBundle's own return. (The CLI formatter fix — `if (!cf?.worstRatio)
+  // return log(...)` — isn't covered here because exercising it would mean exporting
+  // or restructuring the CLI, which is out of scope for this fix.)
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: { records: 5 } });
+  assert.equal(v.ok, true);
+  assert.deepEqual(v.crossFlow, { records: 5 });
+});
+
 const census = (extra = {}) => ({
   measured: 'NOAA minorMeanSpeed …', records: 2, gte0_25kn: 1, gte0_50kn: 0,
   worstRatio: { id: 'A', crossFlow: 0.1, alongAxisPeak: 1.0, ratio: 0.1 },

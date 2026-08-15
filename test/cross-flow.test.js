@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { crossFlowCensus, CROSS_FLOW_RATIO_MAX } from '../src/cross-flow.js';
+import { validateBundle } from '../src/validate.js';
 
 const s = (id, crossFlow, alongAxisPeak) => ({ id, crossFlow, alongAxisPeak });
 
@@ -43,7 +44,35 @@ test('rounds to 3 decimals so a re-extract diff is reviewable', () => {
   assert.equal(c.worstRatio.ratio, 0.062);
 });
 
+test('a near-tie is decided on raw values, not against an already-rounded stored one', () => {
+  // TRUE_WORST is genuinely larger (0.2504 > 0.2502), but both round to 0.25 at 3
+  // decimals. Comparing the second sample's raw value against the first's rounded
+  // stored value would let LESSER win on rounding luck alone.
+  const c = crossFlowCensus([
+    { id: 'TRUE_WORST', crossFlow: 0.2504, alongAxisPeak: 1 },
+    { id: 'LESSER', crossFlow: 0.2502, alongAxisPeak: 1 },
+  ]);
+  assert.equal(c.worstAbsolute.id, 'TRUE_WORST');
+  assert.equal(c.worstAbsolute.crossFlow, 0.25);
+  assert.equal(c.worstRatio.id, 'TRUE_WORST');
+});
+
 test('the bound rejects nothing that exists in the real data', () => {
-  // Worst measured ratio across all 2,800 harmonic bin-records is 0.241 (BOS1130).
+  // Worst measured ratio across the 2,800 bin-records across NOAA's 850 harmonic
+  // stations is 0.241 (BOS1130). Exercised through the real path, offline: the
+  // actual census function feeding the actual validator, not just two constants.
+  const census = crossFlowCensus([{ id: 'BOS1130', crossFlow: 0.178, alongAxisPeak: 0.74 }]);
+  assert.equal(census.worstRatio.ratio, 0.241);
+
+  const v = validateBundle({
+    stations: [{
+      id: 'BOS1130', name: 'Boston', type: 'harmonic', latitude: 42, longitude: -71,
+      floodDirection: 0, ebbDirection: 180, offset: 0,
+      constituents: [{ name: 'M2', amplitude: 1, phase: 0 }],
+    }],
+    crossFlow: census,
+  });
+  assert.equal(v.ok, true);
+
   assert.ok(CROSS_FLOW_RATIO_MAX > 0.241, 'bound must not reject current NOAA data');
 });

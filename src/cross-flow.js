@@ -9,9 +9,10 @@
 //
 // Measured 2026-08-15. Across the 856 records a full US bundle holds: worst
 // ratio 0.241 (BOS1130), worst absolute 0.80 kn (PUG1619 Marrowstone Point).
-// The 0.241 also holds across all 2,800 bin-records NOAA publishes, so the
-// bound below is safe for bins we don't currently take. Full investigation:
-// openwatersio/slackwater-ios#102.
+// The 0.241 also holds across the full 2,800 bin-records across NOAA's 850
+// harmonic stations (not every bin at every one of NOAA's ~2,785 stations —
+// subordinates have no harcon at all), so the bound below is safe for bins we
+// don't currently take. Full investigation: openwatersio/slackwater-ios#102.
 
 /** Provenance, carried in the census so the number explains itself in the file. */
 const MEASURED =
@@ -35,6 +36,9 @@ export function crossFlowCensus(samples) {
 
   let gte0_25kn = 0;
   let gte0_50kn = 0;
+  // Kept as raw (unrounded) values through the loop — comparing a raw incoming
+  // value against an already-r3-rounded stored one lets a within-0.0005 runner-up
+  // win by rounding luck. Rounding happens once, on the way out.
   let worstRatio = null;
   let worstAbsolute = null;
 
@@ -47,17 +51,24 @@ export function crossFlowCensus(samples) {
     // Tracked separately on purpose: the largest ratio and the largest current
     // are usually different stations, and they answer different questions.
     if (!worstRatio || ratio > worstRatio.ratio) {
-      worstRatio = {
-        id: s.id,
-        crossFlow: r3(s.crossFlow),
-        alongAxisPeak: r3(s.alongAxisPeak),
-        ratio: r3(ratio),
-      };
+      worstRatio = { id: s.id, crossFlow: s.crossFlow, alongAxisPeak: s.alongAxisPeak, ratio };
     }
     if (!worstAbsolute || s.crossFlow > worstAbsolute.crossFlow) {
-      worstAbsolute = { id: s.id, crossFlow: r3(s.crossFlow) };
+      worstAbsolute = { id: s.id, crossFlow: s.crossFlow };
     }
   }
 
-  return { measured: MEASURED, records: samples.length, gte0_25kn, gte0_50kn, worstRatio, worstAbsolute };
+  return {
+    measured: MEASURED,
+    records: samples.length,
+    gte0_25kn,
+    gte0_50kn,
+    worstRatio: worstRatio && {
+      id: worstRatio.id,
+      crossFlow: r3(worstRatio.crossFlow),
+      alongAxisPeak: r3(worstRatio.alongAxisPeak),
+      ratio: r3(worstRatio.ratio),
+    },
+    worstAbsolute: worstAbsolute && { id: worstAbsolute.id, crossFlow: r3(worstAbsolute.crossFlow) },
+  };
 }

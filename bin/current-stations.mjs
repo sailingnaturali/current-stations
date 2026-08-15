@@ -37,7 +37,7 @@ if (!cmd || (!out && cmd !== 'check') || flags.help !== undefined) {
 
 const log = (m) => console.error(m);
 const logCrossFlow = (cf) => {
-  if (!cf) return log('cross-flow: not measured');
+  if (!cf?.worstRatio) return log('cross-flow: not measured');
   log(`cross-flow (${cf.records} harmonic records): `
     + `${cf.gte0_25kn} >= 0.25 kn, ${cf.gte0_50kn} >= 0.50 kn`);
   log(`  worst ratio    ${cf.worstRatio.ratio} at ${cf.worstRatio.id} `
