@@ -16,6 +16,7 @@
 //      6.8 min as harmonic). Always try own-harcon first.
 
 import { fetchStationList, fetchHarcon, fetchOffsets } from './noaa.js';
+import { crossFlowCensus } from './cross-flow.js';
 
 const BUNDLE_NOTE = 'Generated from NOAA CO-OPS mdapi (harcon@currbin + currentpredictionoffsets). '
   + 'NOAA data is public domain; derived predictions are UNOFFICIAL and not for navigation.';
@@ -50,6 +51,9 @@ export async function extractBundle(opts = {}) {
   const harmonic = new Map();
   const subs = [];
   const skipped = { typeW: 0, emptyHarcon: [], noReference: [], failed: [] };
+  // Sampled as each harmonic record is built, because the minor axis is in the
+  // harcon we already hold here and nowhere else downstream.
+  const crossFlowSamples = [];
 
   // Store (id, bin) if it has a non-empty harcon. Returns whether it did.
   async function ensureHarmonic(key, id, bin, name, lat, lng) {
@@ -77,6 +81,12 @@ export async function extractBundle(opts = {}) {
         amplitude: c.majorAmplitude,   // knots, because units=english
         phase: c.majorPhaseGMT,        // Greenwich phase — pairs with a Greenwich V₀
       })),
+    });
+    crossFlowSamples.push({
+      id: key,
+      crossFlow: Math.abs(cons[0].minorMeanSpeed ?? 0),
+      alongAxisPeak: cons.reduce((sum, c) => sum + Math.abs(c.majorAmplitude ?? 0), 0)
+        + Math.abs(cons[0].majorMeanSpeed ?? 0),
     });
     return true;
   }
@@ -135,7 +145,12 @@ export async function extractBundle(opts = {}) {
   for (const f of skipped.failed) log(`  failed: ${f}`);
 
   return {
-    bundle: { note: BUNDLE_NOTE, generated: new Date().toISOString(), stations },
+    bundle: {
+      note: BUNDLE_NOTE,
+      generated: new Date().toISOString(),
+      crossFlow: crossFlowCensus(crossFlowSamples),
+      stations,
+    },
     skipped: { ...skipped, unresolvable },
   };
 }

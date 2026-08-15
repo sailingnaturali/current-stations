@@ -8,6 +8,34 @@
   "properties": {
     "note": { "type": "string", "description": "Provenance and licensing." },
     "generated": { "type": "string", "format": "date-time" },
+    "crossFlow": {
+      "type": ["object", "null"],
+      "description": "Census of NOAA `minorMeanSpeed` — flow perpendicular to the flood axis, present at all times including slack. This bundle's major-axis model drops it; this records how much it drops. Not carried per station. Null when the bundle has no harmonic stations.",
+      "properties": {
+        "measured": { "type": "string" },
+        "records": { "type": "integer", "description": "Harmonic records sampled, `@bin` entries included." },
+        "gte0_25kn": { "type": "integer" },
+        "gte0_50kn": { "type": "integer" },
+        "worstRatio": {
+          "type": "object",
+          "description": "Largest crossFlow/alongAxisPeak — where the flood axis describes the station worst.",
+          "properties": {
+            "id": { "type": "string" },
+            "crossFlow": { "type": "number" },
+            "alongAxisPeak": { "type": "number" },
+            "ratio": { "type": "number" }
+          }
+        },
+        "worstAbsolute": {
+          "type": "object",
+          "description": "Largest crossFlow in knots — usually a different station from worstRatio.",
+          "properties": {
+            "id": { "type": "string" },
+            "crossFlow": { "type": "number" }
+          }
+        }
+      }
+    },
     "stations": {
       "type": "array",
       "items": { "oneOf": [{ "$ref": "#/$defs/harmonic" }, { "$ref": "#/$defs/subordinate" }] }

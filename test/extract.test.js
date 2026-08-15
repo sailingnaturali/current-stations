@@ -5,8 +5,9 @@ import assert from 'node:assert/strict';
 import { extractBundle, harmonicKey } from '../src/extract.js';
 import { fetchCurrentPredictions } from '../src/noaa.js';
 
-const con = (name, amplitude, phase, azi = 90, majorMeanSpeed = -0.5) => ({
-  constituentName: name, majorAmplitude: amplitude, majorPhaseGMT: phase, azi, majorMeanSpeed,
+const con = (name, amplitude, phase, azi = 90, majorMeanSpeed = -0.5, minorMeanSpeed = 0) => ({
+  constituentName: name, majorAmplitude: amplitude, majorPhaseGMT: phase, azi,
+  majorMeanSpeed, minorMeanSpeed,
 });
 
 // A fake NOAA built from a station list plus per-(id,bin) harcon and per-id offsets.
@@ -237,4 +238,55 @@ test('surfaces a NOAA error status rather than returning junk', async () => {
     }),
     /NOAA 400/,
   );
+});
+
+test('records a cross-flow census on the bundle, without touching station records', async () => {
+  const fake = fakeNoaa({
+    stations: [
+      { id: 'A', name: 'A', lat: 48, lng: -123, type: 'H', currbin: 1 },
+      { id: 'B', name: 'B', lat: 48, lng: -123, type: 'H', currbin: 1 },
+    ],
+    harcon: {
+      // A: 0.30 kn cross on a 2.5 kn axis (2.0 amplitude + 0.5 |Z0|) -> ratio 0.12
+      'A@1': [con('M2', 2.0, 100, 90, -0.5, 0.30)],
+      // B: 0.60 kn cross on a 1.2 kn axis -> ratio 0.5, and the worst on both counts
+      'B@1': [con('M2', 1.0, 100, 90, -0.2, 0.60)],
+    },
+  });
+  const { bundle } = await run(fake);
+
+  assert.equal(bundle.crossFlow.records, 2);
+  assert.equal(bundle.crossFlow.gte0_25kn, 2);
+  assert.equal(bundle.crossFlow.gte0_50kn, 1);
+  assert.equal(bundle.crossFlow.worstRatio.id, 'B');
+  assert.equal(bundle.crossFlow.worstRatio.ratio, 0.5);
+  assert.equal(bundle.crossFlow.worstAbsolute.id, 'B');
+
+  // The whole point of #102: no minor-axis data reaches a station record.
+  for (const s of bundle.stations) {
+    assert.equal(JSON.stringify(s).includes('minor'), false, 'no per-station minor field');
+  }
+});
+
+test('a bundle with no harmonic stations carries no census rather than an empty one', async () => {
+  const fake = fakeNoaa({
+    stations: [{ id: 'W1', name: 'Rotary', lat: 48, lng: -123, type: 'W', currbin: 1 }],
+  });
+  const { bundle } = await run(fake);
+  assert.equal(bundle.crossFlow, null);
+});
+
+test('subordinates are not sampled — they have no harcon of their own', async () => {
+  const fake = fakeNoaa({
+    stations: [
+      { id: 'REF', name: 'Ref', lat: 41, lng: -71, type: 'H', currbin: 5 },
+      { id: 'ACT1234', name: 'True sub', lat: 41, lng: -71, type: 'S', currbin: 2 },
+    ],
+    harcon: { 'REF@5': [con('M2', 1.8, 322, 90, -0.2, 0.4)] },
+    offsets: { ACT1234: { refStationId: 'REF', refStationBin: 5, mfcAmpAdj: 0.9, mecAmpAdj: 1.1 } },
+  });
+  const { bundle } = await run(fake);
+  assert.equal(bundle.stations.length, 2, 'both stations are in the bundle');
+  assert.equal(bundle.crossFlow.records, 1, 'but only the harmonic one is measured');
+  assert.equal(bundle.crossFlow.worstAbsolute.id, 'REF');
 });
