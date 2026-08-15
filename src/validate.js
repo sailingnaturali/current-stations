@@ -8,7 +8,7 @@ import { CROSS_FLOW_RATIO_MAX } from './cross-flow.js';
 export function validateBundle(bundle) {
   const errors = [];
   const stations = bundle?.stations;
-  if (!Array.isArray(stations)) return { ok: false, counts: {}, errors: ['no stations array'] };
+  if (!Array.isArray(stations)) return { ok: false, counts: {}, crossFlow: null, errors: ['no stations array'] };
 
   const harmonic = stations.filter((s) => s.type === 'harmonic');
   const subordinate = stations.filter((s) => s.type === 'subordinate');

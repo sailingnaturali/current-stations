@@ -61,6 +61,7 @@ test('catches a station missing a finite latitude/longitude', () => {
 test('rejects a malformed bundle rather than throwing', () => {
   assert.equal(validateBundle({}).ok, false);
   assert.equal(validateBundle(null).ok, false);
+  assert.equal(validateBundle({}).crossFlow, null);
 });
 
 const census = (extra = {}) => ({
