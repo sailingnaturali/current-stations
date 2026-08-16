@@ -1,5 +1,5 @@
 name: update-stations
-# Keeps the committed bundle in step with NOAA, and opens a PR when it moves.
+# Keeps the committed bundle in step with NOAA, and files a review issue when it moves.
 #
 # Two cadences, because they catch different things:
 #   weekly  — cheap pre-flight (ONE request for the station list). Full extraction only
@@ -62,8 +62,10 @@ jobs:
           node bin/current-stations.mjs extract currents.json --pace 300
           node bin/current-stations.mjs lock stations.lock.json
 
-      # Validate BEFORE opening a PR. A PR opened by GITHUB_TOKEN does not trigger CI,
-      # so this is the gate — a truncated extraction must never reach review looking clean.
+      # Validate BEFORE pushing anything. A human opens the PR from the compare link in
+      # the issue, so CI does run on it eventually — but this gate fires earlier and
+      # cheaper: a truncated extraction never becomes a branch, an issue, or a review
+      # someone has to reason about. Failing here also keeps the bad bundle off origin.
       - name: Validate the bundle
         if: steps.decide.outputs.run == 'true'
         run: node bin/current-stations.mjs validate currents.json
@@ -81,7 +83,7 @@ jobs:
           CHANGED=$(git diff --numstat -- currents.json | awk '{print $1" added, "$2" removed"}')
           if [ "$(git diff --numstat -- currents.json stations.lock.json | wc -l)" -gt 0 ] && \
              [ -z "$(git diff -U0 -- currents.json stations.lock.json | grep '^[+-]' | grep -v '^[+-][+-]' | grep -v '"generated"')" ]; then
-            echo "Only the generated timestamp changed — not opening a PR."; exit 0
+            echo "Only the generated timestamp changed — nothing to review."; exit 0
           fi
 
           BRANCH="noaa-station-update-$(date +%Y%m%d)"
