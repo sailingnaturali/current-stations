@@ -36,6 +36,14 @@ if (!cmd || (!out && cmd !== 'check') || flags.help !== undefined) {
 }
 
 const log = (m) => console.error(m);
+const logCrossFlow = (cf) => {
+  if (!cf?.worstRatio) return log('cross-flow: not measured');
+  log(`cross-flow (${cf.records} harmonic records): `
+    + `${cf.gte0_25kn} >= 0.25 kn, ${cf.gte0_50kn} >= 0.50 kn`);
+  log(`  worst ratio    ${cf.worstRatio.ratio} at ${cf.worstRatio.id} `
+    + `(${cf.worstRatio.crossFlow} kn across a ${cf.worstRatio.alongAxisPeak} kn axis)`);
+  log(`  worst absolute ${cf.worstAbsolute.crossFlow} kn at ${cf.worstAbsolute.id}`);
+};
 const paceMs = flags.pace !== undefined ? Number(flags.pace) : undefined;
 
 if (cmd === 'extract') {
@@ -49,6 +57,7 @@ if (cmd === 'extract') {
   // revision gets reviewed. Release artifacts are minified from it.
   writeFileSync(out, JSON.stringify(bundle, null, 2) + '\n');
   log(`wrote ${out} — ${bundle.stations.length} stations`);
+  logCrossFlow(bundle.crossFlow);
   if (skipped.failed.length) process.exitCode = 1;
 } else if (cmd === 'golden') {
   const fixture = await captureGolden(
@@ -81,6 +90,7 @@ if (cmd === 'extract') {
 } else if (cmd === 'validate') {
   const v = validateBundle(JSON.parse(readFileSync(out, 'utf8')));
   log(`${out}: ${v.counts.harmonic} harmonic, ${v.counts.subordinate} subordinate`);
+  logCrossFlow(v.crossFlow);
   for (const e of v.errors) log(`  ERROR: ${e}`);
   if (!v.ok) process.exitCode = 1;
 } else if (cmd === 'lock') {

@@ -23,6 +23,16 @@ to a local run. The old "must be built on a residential connection" caveat was w
 Normally you do NOT extract by hand — `update-stations` opens a PR when NOAA moves.
 Merge that first, then:
 
+When the release adds a bundle field that the committed `currents.json` predates (e.g.
+`crossFlow` as of 0.3.0), force-run `update-stations` and merge the resulting bundle PR
+**before** tagging — otherwise the release asset ships a shape that doesn't match what
+README/schema just started documenting:
+
+```bash
+gh workflow run update-stations.yml -f force=true
+# then merge the PR it opens, before step 3 below
+```
+
 ```bash
 # 1. minify the committed bundle into the release asset
 npm run bundle:min          # currents.json -> currents.min.json

@@ -61,4 +61,56 @@ test('catches a station missing a finite latitude/longitude', () => {
 test('rejects a malformed bundle rather than throwing', () => {
   assert.equal(validateBundle({}).ok, false);
   assert.equal(validateBundle(null).ok, false);
+  assert.equal(validateBundle({}).crossFlow, null);
+});
+
+test('a partial census (no worstRatio yet) returns cleanly rather than throwing', () => {
+  // Regression for a real crash: bin/current-stations.mjs's logCrossFlow guarded
+  // `!cf` but then dereferenced `cf.worstRatio.ratio` and `cf.worstAbsolute.crossFlow`
+  // unconditionally — a bundle whose census is present but partial (e.g. mid-refactor,
+  // or a future producer that hasn't filled it in) threw TypeError instead of
+  // reporting. That crash is in the CLI formatter, not here — validateBundle itself
+  // never dereferenced into crossFlow beyond an optional-chained `cf?.worstRatio`, so
+  // the coverage this test can honestly add is that a partial census doesn't upset
+  // validateBundle's own return. (The CLI formatter fix — `if (!cf?.worstRatio)
+  // return log(...)` — isn't covered here because exercising it would mean exporting
+  // or restructuring the CLI, which is out of scope for this fix.)
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: { records: 5 } });
+  assert.equal(v.ok, true);
+  assert.deepEqual(v.crossFlow, { records: 5 });
+});
+
+const census = (extra = {}) => ({
+  measured: 'NOAA minorMeanSpeed …', records: 2, gte0_25kn: 1, gte0_50kn: 0,
+  worstRatio: { id: 'A', crossFlow: 0.1, alongAxisPeak: 1.0, ratio: 0.1 },
+  worstAbsolute: { id: 'A', crossFlow: 0.1 }, ...extra,
+});
+
+test('accepts a bundle whose cross-flow ratio is within the bound', () => {
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: census() });
+  assert.equal(v.ok, true);
+  assert.equal(v.crossFlow.worstRatio.ratio, 0.1);
+});
+
+test('rejects a bundle where the flood axis stops describing a station', () => {
+  const v = validateBundle({
+    stations: [harmonic('A')],
+    crossFlow: census({ worstRatio: { id: 'BAD', crossFlow: 0.9, alongAxisPeak: 1.0, ratio: 0.9 } }),
+  });
+  assert.equal(v.ok, false);
+  assert.match(v.errors.join(), /BAD/);
+  assert.match(v.errors.join(), /cross-flow/i);
+});
+
+test('a bundle predating the census is valid, not broken', () => {
+  // The vendored extract in slackwater-ios has no crossFlow block. A check that
+  // postdates a bundle must not turn that bundle red.
+  const v = validateBundle({ stations: [harmonic('A')] });
+  assert.equal(v.ok, true);
+  assert.equal(v.crossFlow, null);
+});
+
+test('a null census (no harmonic stations) is valid', () => {
+  const v = validateBundle({ stations: [harmonic('A')], crossFlow: null });
+  assert.equal(v.ok, true);
 });

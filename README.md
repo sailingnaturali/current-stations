@@ -61,6 +61,11 @@ Ships TypeScript types. No dependencies.
 ```json
 {
   "note": "Generated from NOAA CO-OPS mdapi …",
+  "crossFlow": {
+    "measured": "…", "records": 856, "gte0_25kn": 61, "gte0_50kn": 12,
+    "worstRatio": { "id": "BOS1130", "crossFlow": 0.178, "alongAxisPeak": 0.74, "ratio": 0.241 },
+    "worstAbsolute": { "id": "PUG1619", "crossFlow": 0.8 }
+  },
   "stations": [
     {
       "id": "PUG1717", "name": "Turn Point, Boundary Pass", "type": "harmonic",
@@ -82,7 +87,7 @@ Speeds in knots, directions degrees true, time offsets in seconds. Full schema:
 [schema/currents.schema.json](schema/currents.schema.json) ·
 [docs/schema.md](docs/schema.md).
 
-Three details that are easy to get wrong and expensive to debug:
+Four details that are easy to get wrong and expensive to debug:
 
 - **`offset` is Z₀**, the station's net mean flow (NOAA `majorMeanSpeed`). Slack is
   where the velocity curve crosses zero, so dropping this moves every slack time. The
@@ -95,6 +100,11 @@ Three details that are easy to get wrong and expensive to debug:
   and NOAA predicts them harmonically; the offset reduction overshoots them badly
   (89 min vs 6.8 min at PUG1716). Rare — 1 of 1,706 — but you can't tell which without
   asking, and the ask is one request.
+- **The model is one axis, and the bundle says how much that costs.** `crossFlow` is a
+  census of NOAA's `minorMeanSpeed`, the flow perpendicular to the flood axis that runs
+  even at slack. `validate` fails above a 0.5 ratio. Bundling the full minor axis was
+  measured and rejected: a 2D magnitude series never crosses zero, so slack detection
+  silently returns nothing.
 
 ## Maintenance
 

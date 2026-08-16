@@ -28,6 +28,8 @@ export interface NoaaConstituent {
   azi: number;
   /** Z0: net mean flow along the major axis, signed. */
   majorMeanSpeed: number;
+  /** DC cross-axis flow, knots — the minor-axis counterpart to `majorMeanSpeed`. */
+  minorMeanSpeed: number;
   binNbr: number;
 }
 
@@ -76,9 +78,33 @@ export interface SubordinateStation {
   ebbSpeedRatio: number;
 }
 
+export interface CrossFlowCensus {
+  /** What was measured, carried inline so the number explains itself. */
+  measured: string;
+  /** Harmonic records sampled, `@bin` entries included. */
+  records: number;
+  gte0_25kn: number;
+  gte0_50kn: number;
+  /** Where the flood axis describes the station worst. */
+  worstRatio: {
+    id: string;
+    crossFlow: number;
+    /** Σ|majorAmplitude| + |Z0| — a theoretical max if every constituent aligned in phase, not a realized peak speed. */
+    alongAxisPeak: number;
+    ratio: number;
+  };
+  /** Largest cross-flow in knots — usually a different station from `worstRatio`. */
+  worstAbsolute: { id: string; crossFlow: number };
+}
+
 export interface Bundle {
   note: string;
   generated: string;
+  /**
+   * How much the major-axis model drops. Null when the bundle has no harmonic
+   * stations. Never carried per station — see docs/schema.md.
+   */
+  crossFlow: CrossFlowCensus | null;
   stations: (HarmonicStation | SubordinateStation)[];
 }
 

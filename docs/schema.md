@@ -98,4 +98,11 @@ exactly; a reference station may appear at several bins with different constitue
 - **Subordinates whose reference didn't resolve.** Counted in `skipped.unresolvable`. A
   healthy full-US run drops zero.
 - **Minor-axis constituents.** NOAA publishes `minorAmplitude`/`minorPhaseGMT` for a 2D
-  rotary model; a major-axis model doesn't use them, so they aren't carried.
+  rotary model; a major-axis model doesn't use them, so they aren't carried per station.
+  Bundling them was measured and rejected — worth a median 4% of peak speed, and a 2D
+  magnitude series never crosses zero, which silently yields no slack events at all
+  (openwatersio/slackwater-ios#102).
+
+  The bundle does carry a **`crossFlow` census** at the root: how much perpendicular flow
+  the major-axis model drops, and the worst station by ratio and by knots. `validate`
+  fails a bundle whose worst ratio exceeds 0.5.
