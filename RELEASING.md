@@ -43,8 +43,20 @@ npm run validate:bundle
 # 3. tag and release — triggers the npm publish workflow
 gh release create v0.2.0 --notes "..."
 
-# 4. attach the bundle, named currents.json so vendoring scripts don't change
-gh release upload v0.2.0 currents.min.json#currents.json
+# 4. attach the bundle, named currents.json so vendoring scripts don't change.
+#    Copy to the right name first — `gh` does NOT support a `file#displayname`
+#    rename on upload; it silently uploads under the on-disk basename. That is
+#    why v0.2.0 and v0.2.1 shipped as `currents.min.json` and slackwater-engine's
+#    `--pattern currents.json` could not match them.
+mkdir -p /tmp/rel && cp currents.min.json /tmp/rel/currents.json
+gh release upload v0.2.0 /tmp/rel/currents.json
+```
+
+Verify the asset is reachable the way consumers actually fetch it, rather than
+trusting the upload:
+
+```bash
+gh release download v0.2.0 --pattern currents.json --output /tmp/check.json --clobber
 ```
 
 Expect roughly 855 harmonic + 1,700 subordinate stations, and **0 unresolvable
