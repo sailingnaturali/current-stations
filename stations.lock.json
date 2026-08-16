@@ -1,6 +1,6 @@
 {
   "note": "Pinned NOAA current-station list. `current-stations check` fails when NOAA's live list no longer matches this. Regenerate with `current-stations lock`, and re-extract the bundle when it changes.",
-  "generated": "2026-07-19T17:18:51.881Z",
+  "generated": "2026-08-16T02:49:40.631Z",
   "counts": {
     "H": 841,
     "S": 1706,

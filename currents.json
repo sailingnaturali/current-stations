@@ -1,6 +1,22 @@
 {
   "note": "Generated from NOAA CO-OPS mdapi (harcon@currbin + currentpredictionoffsets). NOAA data is public domain; derived predictions are UNOFFICIAL and not for navigation.",
-  "generated": "2026-07-24T01:17:32.241Z",
+  "generated": "2026-08-16T02:49:39.737Z",
+  "crossFlow": {
+    "measured": "NOAA minorMeanSpeed — flow perpendicular to the flood axis, present at all times including slack",
+    "records": 856,
+    "gte0_25kn": 62,
+    "gte0_50kn": 12,
+    "worstRatio": {
+      "id": "BOS1130",
+      "crossFlow": 0.178,
+      "alongAxisPeak": 0.74,
+      "ratio": 0.241
+    },
+    "worstAbsolute": {
+      "id": "PUG1619",
+      "crossFlow": 0.803
+    }
+  },
   "stations": [
     {
       "id": "ACT1616",
