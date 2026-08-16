@@ -21,7 +21,11 @@ on:
         default: true
 permissions:
   contents: write
-  pull-requests: write
+  # Issues, not pull-requests: GITHUB_TOKEN is refused `createPullRequest` unless
+  # "Allow GitHub Actions to create and approve pull requests" is enabled, and that
+  # setting is not available to this org. So this workflow pushes the branch and
+  # opens an ISSUE carrying the review material plus a one-click compare link.
+  issues: write
 jobs:
   update:
     runs-on: ubuntu-latest
@@ -64,7 +68,7 @@ jobs:
         if: steps.decide.outputs.run == 'true'
         run: node bin/current-stations.mjs validate currents.json
 
-      - name: Open a PR if anything changed
+      - name: Push the branch and file a review issue if anything changed
         if: steps.decide.outputs.run == 'true'
         env:
           GH_TOKEN: ${{ github.token }}
@@ -88,8 +92,13 @@ jobs:
           git commit -m "data: refresh NOAA current-station bundle"
           git push -q origin "$BRANCH"
 
+          COMPARE="${{ github.server_url }}/${{ github.repository }}/compare/main...$BRANCH?expand=1"
+
           {
-            echo "NOAA's current-station data has changed."
+            echo "NOAA's current-station data has changed. The refreshed bundle is pushed"
+            echo "to branch [\`$BRANCH\`](${{ github.server_url }}/${{ github.repository }}/tree/$BRANCH)."
+            echo
+            echo "**[→ Open the pull request]($COMPARE)**"
             echo
             echo '```'
             node bin/current-stations.mjs validate currents.json 2>&1
@@ -106,6 +115,17 @@ jobs:
             fi
             echo
             echo "Review the diff, merge, then cut a release so consumers pick it up."
+            echo
+            echo "<sub>Filed as an issue rather than opened as a PR because GITHUB_TOKEN"
+            echo "is refused \`createPullRequest\` on this org. Close this issue once the"
+            echo "branch is merged.</sub>"
           } > body.md
 
-          gh pr create --title "Refresh NOAA current-station bundle" --body-file body.md --head "$BRANCH"
+          # ponytail: one issue per refresh, no dedup against an already-open one.
+          # Refreshes are rare (monthly forced + drift-only weekly); add dedup if
+          # they ever start stacking up unactioned.
+          gh issue create --title "Refresh NOAA current-station bundle ($BRANCH)" --body-file body.md
+
+          # Also surface it on the run itself, so a failed notification isn't the
+          # only trail back to the branch.
+          cat body.md >> "$GITHUB_STEP_SUMMARY"
